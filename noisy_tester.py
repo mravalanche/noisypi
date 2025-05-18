@@ -177,7 +177,7 @@ class ToggleSwitch(Switch):
     def _refresh_time_label(self) -> None:
         if not self.id:
             return
-        lbl = self.app.query_one(f"#{self.id}-time", Label, expect_none=True)  # type: ignore
+        lbl = self.app.query_one(f"#{self.id}-time", Label)  # type: ignore
         if lbl:
             lbl.update(Text.assemble((self.last_toggle_str, "dim italic")))
 
