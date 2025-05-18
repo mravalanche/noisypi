@@ -1,0 +1,47 @@
+Screen {
+    overflow: auto
+}
+
+.header {
+    margin: 1;
+    text-style: bold underline;
+}
+
+#buttons {
+    layout: grid;
+    grid-size: 4;
+    grid-gutter: 1 2;
+    grid-columns: 1fr;
+    grid-rows: 1fr 1fr 1fr 1fr;
+    max-width: 120;
+}
+
+#switches {
+    layout: grid;
+    grid-size: 5;
+    grid-gutter: 1 2;
+    grid-columns: 1fr;
+    grid-rows: 1fr 2.5fr 1fr;
+    max-width: 120;
+    max-height: 10
+}
+
+.switch-label {
+    padding-left: 2;
+}
+
+.times {
+    text-style: italic;
+    text-align: end;
+    padding-left: 2;
+}
+
+Switch {
+    width: 100%;
+    height: 100%;
+}
+
+Button {
+    width: 100%;
+    height: 100%;
+}

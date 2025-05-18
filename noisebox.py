@@ -1,7 +1,6 @@
 from common import log
 from gpiozero import LED, Button, PWMLED
-# from signal import pause
-def pause(): pass
+from signal import pause
 from pathlib import Path
 from time import sleep
 import pygame
@@ -16,15 +15,15 @@ pygame.init()
 
 sound_folder = Path(__file__).parent / "resources"
 
-lightsaber_open_sound = pygame.mixer.Sound(sound_folder / "lightsaber_open.wav")
-lightsaber_close_sound = pygame.mixer.Sound(sound_folder / "lightsaber_close.wav")
+lightsaber_open_sound = pygame.mixer.Sound(str(sound_folder / "lightsaber_open.wav"))
+lightsaber_close_sound = pygame.mixer.Sound(str(sound_folder / "lightsaber_close.wav"))
 lightsaber_hum_sound = sound_folder / "lightsaber_hum.wav"
 
-starwars_funk = sound_folder / "star_wars_funk.wav"
+starwars_funk = str(sound_folder / "star_wars_funk.wav")
 
-r2d2_scream_sound = pygame.mixer.Sound(sound_folder / "r2d2_scream.wav")
-r2d2_woo_sound = pygame.mixer.Sound(sound_folder / "r2d2_woooo.wav")
-blaster_sound = pygame.mixer.Sound(sound_folder / "blaster.wav")
+r2d2_scream_sound = pygame.mixer.Sound(str(sound_folder / "r2d2_scream.wav"))
+r2d2_woo_sound = pygame.mixer.Sound(str(sound_folder / "r2d2_woooo.wav"))
+blaster_sound = pygame.mixer.Sound(str(sound_folder / "blaster.wav"))
 
 # ------------------------------------------------
 # GPIO Setup
@@ -33,23 +32,24 @@ blaster_sound = pygame.mixer.Sound(sound_folder / "blaster.wav")
 power_button = Button(3, hold_time=3)   # GPIO03 - Pin 05 + Ground
 # Powered LED should be connected between Pin 1 + RGround
 # Status LED should be connected between GPIO14 (08) + RGround
+# https://th.bing.com/th/id/OIP.2hmDzozDem4i3qrLjrIsmAHaHz?pid=ImgDet&rs=1
 
-lightsaber_switch = Button(26)          # GIPO26 - Pin 39 + Ground
-lightsaber_led1 = PWMLED(21)            # GPIO21 - Pin 40 + RGround
-lightsaber_led2 = PWMLED(4)             # GPIO04 - Pin 07 + RGround
-lightsaber_led3 = PWMLED(17)            # GPIO17 - Pin 11 + RGround
+lightsaber_switch = Button(26)
+lightsaber_led1 = PWMLED(25)
+lightsaber_led2 = PWMLED(24)
+lightsaber_led3 = PWMLED(23)
 
-blinky_switch = Button(27)              # GPIO27 - Pin 13 + Ground
-blinky_led1 = LED(22)                   # GPIO22 - Pin 15 + RGround
-blinky_led2 = LED(5)                    # GPIO05 - Pin 29 + RGround
+blinky_switch = Button()
+blinky_led1 = LED(12)
+blinky_led2 = LED(16)
 
-r2d2_scream_button = Button(6)          # GPIO06 - Pin 31 + Ground
+r2d2_scream_button = Button(13)
 
-blaster_button = Button(13)             # GPIO13 - Pin 33 + Ground
-blaster_leds = LED(19)                  # GPIO19 - Pin 35 + RGround
+blaster_button = Button(6)
+blaster_leds = LED(7)
 
-disco_switch = Button(23)               # GPIO23 - Pin 16 + Ground
-disco_leds = LED(18)                    # GPIO18 - Pin 12 + RGround
+disco_switch = Button(5)
+disco_leds = LED(8)
 
 # ------------------------------------------------
 # Functions
@@ -63,10 +63,13 @@ DISCO_MODE = False
 BLINKY_MODE = False
 
 def shutdown():
+    log.info("------- NoiseBox Shutting Down -------")
     call("sudo poweroff", shell=True)
+    exit()
 
 
 def lightsaber_open():
+    log.info("Lightsaber start")
     pygame.mixer.Sound.play(lightsaber_open_sound)
     pygame.mixer.music.load(lightsaber_hum_sound)
     pygame.mixer.music.play(-1)
@@ -98,6 +101,7 @@ def lightsaber_glow():
 
 
 def lightsaber_close():
+    log.info("Lightsaber stop")
     global LIGHTSABER_MODE
     LIGHTSABER_MODE = False
     sleep(0.5)
@@ -112,6 +116,7 @@ def lightsaber_close():
 
 
 def blinky_start():
+    log.info("Blinky Start!")
     global BLINKY_MODE
     BLINKY_MODE = True
     blinky_led1.blink()
@@ -120,6 +125,7 @@ def blinky_start():
 
 
 def blinky_stop():
+    log.info("Blinky Stop!")
     global BLINKY_MODE
     BLINKY_MODE = False
     blinky_led1.off()
@@ -127,12 +133,14 @@ def blinky_stop():
 
 
 def r2d2_scream():
+    log.info("Whaaaaaa")
     pygame.mixer.Sound.play(r2d2_scream_sound)
 
 
 def blaster_pew_pew():
+    log.info("Pew pew")
     pygame.mixer.Sound.play(blaster_sound)
-    for _ in range(20):
+    for _ in range(10):
         blaster_leds.on()
         sleep(0.05)
         blaster_leds.off()
@@ -140,12 +148,19 @@ def blaster_pew_pew():
 
 
 def disco_start():
+    log.info("DISCO MODE!!!")
     pygame.mixer.music.load(starwars_funk)
     pygame.mixer.music.play(-1)
+    disco_leds.on()
 
 
 def disco_stop():
+    log.info("DISCO MODE stop :-(")
     pygame.mixer.music.stop()
+    disco_leds.off()
+    if LIGHTSABER_MODE:
+        pygame.mixer.music.load(lightsaber_hum_sound)
+        pygame.mixer.music.play(-1)
 
 
 # ------------------------------------------------
@@ -169,10 +184,6 @@ disco_switch.when_deactivated = disco_stop
 def main():
     log.info("------- NoiseBox Starting -------")
     pause()
-    #lightsaber_open()
-    disco_start()
-    sleep(45)
-    #lightsaber_close()
 
 
 if __name__ == '__main__':
