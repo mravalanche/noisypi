@@ -230,7 +230,7 @@ class NoisyTesterApp(App):
             yield Label("LED Toggles", classes="header")
             with Container(id="buttons"):
                 # Row 1
-                yield ToggleButton("Lightsaber 3", id="lsled3")
+                yield ToggleButton("Lightsaber 1", id="lsled1")
                 yield ToggleButton("", disabled=True)
                 yield ToggleButton("Blinky 1", id="blinkyled1")
                 yield ToggleButton("Blinky 2", id="blinkyled2")
@@ -240,7 +240,7 @@ class NoisyTesterApp(App):
                 yield ToggleButton("", disabled=True)
                 yield ToggleButton("", disabled=True)
                 # Row 3
-                yield ToggleButton("Lightsaber 1", id="lsled1")
+                yield ToggleButton("Lightsaber 3", id="lsled3")
                 yield ToggleButton("", disabled=True)
                 yield ToggleButton("Blaster", id="blasterled")
                 yield ToggleButton("", disabled=True)
@@ -263,10 +263,10 @@ class NoisyTesterApp(App):
                     yield Label(title, classes="switch-label")
 
                 yield ToggleSwitch(id="lsswitch", disabled=True)
-                yield ToggleSwitch(id="blinkyswitch")
-                yield ToggleSwitch(id="r2d2button")
-                yield ToggleSwitch(id="blasterbutton")
-                yield ToggleSwitch(id="discoswitch")
+                yield ToggleSwitch(id="blinkyswitch", disabled=True)
+                yield ToggleSwitch(id="r2d2button", disabled=True)
+                yield ToggleSwitch(id="blasterbutton", disabled=True)
+                yield ToggleSwitch(id="discoswitch", disabled=True)
 
                 for sid in [
                     "lsswitch",
