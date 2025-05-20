@@ -3,3 +3,7 @@ rich
 textual
 gpiozero
 pygame
+lgpio
+RPi
+pigpio
+gpiozero

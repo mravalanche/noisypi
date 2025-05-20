@@ -73,6 +73,7 @@ _blinky_stop_timer: Timer | None = None
 def shutdown():
     log.info("------- NoiseBox Shutting Down -------")
     pygame.mixer.Sound.play(shutdown_sound)
+    sleep(5)
     call("sudo poweroff", shell=True)
     exit()
 
