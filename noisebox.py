@@ -25,6 +25,8 @@ starwars_funk = str(sound_folder / "star_wars_funk.wav")
 r2d2_scream_sound = pygame.mixer.Sound(str(sound_folder / "r2d2_scream.wav"))
 r2d2_woo_sound = pygame.mixer.Sound(str(sound_folder / "r2d2_woooo.wav"))
 blaster_sound = pygame.mixer.Sound(str(sound_folder / "blaster.wav"))
+r2_beep_sound = pygame.mixer.Sound(str(sound_folder / "r2_beep.wav"))
+shutdown_sound = pygame.mixer.Sound(str(sound_folder / "shutdown.wav"))
 
 # ------------------------------------------------
 # GPIO Setup
@@ -70,6 +72,7 @@ _blinky_stop_timer: Timer | None = None
 
 def shutdown():
     log.info("------- NoiseBox Shutting Down -------")
+    pygame.mixer.Sound.play(shutdown_sound)
     call("sudo poweroff", shell=True)
     exit()
 
@@ -241,6 +244,7 @@ disco_switch.when_deactivated = disco_stop
 
 def main():
     log.info("------- NoiseBox Starting -------")
+    pygame.mixer.Sound.play(r2_beep_sound)
     pause()
 
 
