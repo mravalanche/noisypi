@@ -6,7 +6,7 @@ from time import sleep
 import pygame
 from random import randint
 from subprocess import call
-from threading import Thread
+from threading import Thread, Timer
 
 pygame.init()
 
@@ -30,10 +30,7 @@ blaster_sound = pygame.mixer.Sound(str(sound_folder / "blaster.wav"))
 # GPIO Setup
 # ------------------------------------------------
 
-power_button = Button(3, hold_time=3)   # GPIO03 - Pin 05 + Ground
-# Powered LED should be connected between Pin 1 + RGround
-# Status LED should be connected between GPIO14 (08) + RGround
-# https://th.bing.com/th/id/OIP.2hmDzozDem4i3qrLjrIsmAHaHz?pid=ImgDet&rs=1
+power_button = Button(3, hold_time=3)   # GPIO03 - Pin 05 + GND
 
 lightsaber_switch = Button(26, pull_up=True)
 lightsaber_led1 = PWMLED(25)
@@ -53,16 +50,23 @@ disco_switch = Button(5, pull_up=True)
 disco_leds = LED(8)
 
 # ------------------------------------------------
-# Functions
+# Global State & Constants
 # ------------------------------------------------
 
 lightsaber_leds = [lightsaber_led1, lightsaber_led2, lightsaber_led3]
-lightsaber_led_sleep_time = 2 / len(lightsaber_leds) / 100  # Total seconds / LEDs / steps
+lightsaber_led_sleep_time = 2 / len(lightsaber_leds) / 100  # total seconds / LEDs / steps
+
+GRACE_PERIOD = 0.2  # seconds between switch‑off and animation stop
 
 LIGHTSABER_MODE = False
-DISCO_MODE = False
 BLINKY_MODE = False
 
+_lightsaber_stop_timer: Timer | None = None
+_blinky_stop_timer: Timer | None = None
+
+# ------------------------------------------------
+# Helper functions
+# ------------------------------------------------
 
 def shutdown():
     log.info("------- NoiseBox Shutting Down -------")
@@ -70,8 +74,19 @@ def shutdown():
     exit()
 
 
+# ------------- Lightsaber -------------
+
 def lightsaber_open():
-    """Turn on the saber and start background glow in its own thread."""
+    """Turn on the lightsaber (idempotent)."""
+    global LIGHTSABER_MODE, _lightsaber_stop_timer
+
+    # Cancel pending stop if switch bounced
+    if _lightsaber_stop_timer and _lightsaber_stop_timer.is_alive():
+        _lightsaber_stop_timer.cancel()
+
+    if LIGHTSABER_MODE:
+        return  # already running
+
     log.info("Lightsaber start")
     pygame.mixer.Sound.play(lightsaber_open_sound)
     pygame.mixer.music.load(lightsaber_hum_sound)
@@ -83,40 +98,36 @@ def lightsaber_open():
             led.value = i / 100
             sleep(lightsaber_led_sleep_time)
 
-    global LIGHTSABER_MODE
     LIGHTSABER_MODE = True
-
-    # Run the glow loop on a daemon thread so callbacks return immediately
-    Thread(target=lightsaber_glow, daemon=True).start()
+    Thread(target=_lightsaber_glow, daemon=True).start()
 
 
-def lightsaber_glow():
-    """Subtle breathing effect while the saber is on."""
+def _lightsaber_glow():
+    """Breathing effect (background thread)."""
     while LIGHTSABER_MODE:
-        # Glow up
         for i in range(80, 100):
             for led in lightsaber_leds:
                 led.value = i / 100
             sleep(0.01)
-
-        # Glow down
-        for i in range(100, 79, -1):  # correct descending range
+        for i in range(100, 79, -1):
             for led in lightsaber_leds:
                 led.value = i / 100
             sleep(0.01)
-
         sleep(randint(1, 20) / 10)
 
 
-def lightsaber_close():
-    log.info("Lightsaber stop")
+def _lightsaber_stop():
+    """Actually retract and stop audio (runs after grace period)."""
     global LIGHTSABER_MODE
-    LIGHTSABER_MODE = False  # stops the glow thread next loop
-    sleep(0.5)
+    if not LIGHTSABER_MODE:
+        return
+
+    log.info("Lightsaber stop")
+    LIGHTSABER_MODE = False
+
     pygame.mixer.music.stop()
     pygame.mixer.Sound.play(lightsaber_close_sound)
 
-    # Retract gradually
     for led in reversed(lightsaber_leds):
         for i in range(100, 0, -1):
             led.value = i / 100
@@ -124,22 +135,55 @@ def lightsaber_close():
         led.value = 0
 
 
+def lightsaber_schedule_stop():
+    """Schedule lightsaber stop after GRACE_PERIOD."""
+    global _lightsaber_stop_timer
+    if _lightsaber_stop_timer and _lightsaber_stop_timer.is_alive():
+        _lightsaber_stop_timer.cancel()
+    _lightsaber_stop_timer = Timer(GRACE_PERIOD, _lightsaber_stop)
+    _lightsaber_stop_timer.daemon = True
+    _lightsaber_stop_timer.start()
+
+
+# ------------- Blinky -------------
+
 def blinky_start():
+    """Start Blinky (idempotent)."""
+    global BLINKY_MODE, _blinky_stop_timer
+
+    if _blinky_stop_timer and _blinky_stop_timer.is_alive():
+        _blinky_stop_timer.cancel()
+
+    if BLINKY_MODE:
+        return
+
     log.info("Blinky Start!")
-    global BLINKY_MODE
     BLINKY_MODE = True
     blinky_led1.blink()
     sleep(1)
     blinky_led2.blink()
 
 
-def blinky_stop():
-    log.info("Blinky Stop!")
+def _blinky_stop():
     global BLINKY_MODE
+    if not BLINKY_MODE:
+        return
+
+    log.info("Blinky Stop!")
     BLINKY_MODE = False
     blinky_led1.off()
     blinky_led2.on()
 
+
+def blinky_schedule_stop():
+    global _blinky_stop_timer
+    if _blinky_stop_timer and _blinky_stop_timer.is_alive():
+        _blinky_stop_timer.cancel()
+    _blinky_stop_timer = Timer(GRACE_PERIOD, _blinky_stop)
+    _blinky_stop_timer.daemon = True
+    _blinky_stop_timer.start()
+
+# ------------- Misc callbacks -------------
 
 def r2d2_scream():
     log.info("Whaaaaaa")
@@ -164,7 +208,7 @@ def disco_start():
 
 
 def disco_stop():
-    log.info("DISCO MODE stop :-(")
+    log.info("DISCO MODE stop :‑(")
     pygame.mixer.music.stop()
     disco_leds.off()
     if LIGHTSABER_MODE:
@@ -173,21 +217,26 @@ def disco_stop():
 
 
 # ------------------------------------------------
-# Callbacks
+# GPIO Callbacks
 # ------------------------------------------------
 
 power_button.when_held = shutdown
+
 lightsaber_switch.when_activated = lightsaber_open
-lightsaber_switch.when_deactivated = lightsaber_close
+lightsaber_switch.when_deactivated = lightsaber_schedule_stop
+
 blinky_switch.when_activated = blinky_start
-blinky_switch.when_deactivated = blinky_stop
+blinky_switch.when_deactivated = blinky_schedule_stop
+
 r2d2_scream_button.when_activated = r2d2_scream
+
 blaster_button.when_activated = blaster_pew_pew
+
 disco_switch.when_activated = disco_start
 disco_switch.when_deactivated = disco_stop
 
 # ------------------------------------------------
-# Running Code
+# Main loop
 # ------------------------------------------------
 
 def main():
@@ -195,6 +244,5 @@ def main():
     pause()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-    sleep(5)
