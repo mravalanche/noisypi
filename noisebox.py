@@ -257,7 +257,7 @@ disco_switch.when_deactivated = disco_stop
 def main():
     log.info("------- NoiseBox Starting -------")
     pygame.mixer.Sound.play(r2_beep_sound)
-    lightsaber_led2.blink(0.25,0.25,4)
+    lightsaber_led2.blink(on_time=0.25,off_time=0.25,n=4)
     pause()
 
 
