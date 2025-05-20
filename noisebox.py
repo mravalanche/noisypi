@@ -34,12 +34,12 @@ power_button = Button(3, hold_time=3)   # GPIO03 - Pin 05 + Ground
 # Status LED should be connected between GPIO14 (08) + RGround
 # https://th.bing.com/th/id/OIP.2hmDzozDem4i3qrLjrIsmAHaHz?pid=ImgDet&rs=1
 
-lightsaber_switch = Button(26)
+lightsaber_switch = Button(26, pull_up=True)
 lightsaber_led1 = PWMLED(25)
 lightsaber_led2 = PWMLED(24)
 lightsaber_led3 = PWMLED(23)
 
-blinky_switch = Button(19)
+blinky_switch = Button(19, pull_up=True)
 blinky_led1 = LED(12)
 blinky_led2 = LED(16)
 
@@ -48,7 +48,7 @@ r2d2_scream_button = Button(13)
 blaster_button = Button(6)
 blaster_leds = LED(7)
 
-disco_switch = Button(5)
+disco_switch = Button(5, pull_up=True)
 disco_leds = LED(8)
 
 # ------------------------------------------------

@@ -16,4 +16,4 @@ handler.setFormatter(formatter)
 
 log = logging.getLogger("noisy_logger")
 log.addHandler(handler)
-log.setLevel(logging.DEBUG if DEBUG else logging.WARN)
+log.setLevel(logging.DEBUG if DEBUG else logging.INFO)
