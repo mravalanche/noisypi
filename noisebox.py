@@ -6,6 +6,7 @@ from time import sleep
 import pygame
 from random import randint
 from subprocess import call
+from threading import Thread
 
 pygame.init()
 
@@ -62,6 +63,7 @@ LIGHTSABER_MODE = False
 DISCO_MODE = False
 BLINKY_MODE = False
 
+
 def shutdown():
     log.info("------- NoiseBox Shutting Down -------")
     call("sudo poweroff", shell=True)
@@ -69,48 +71,55 @@ def shutdown():
 
 
 def lightsaber_open():
+    """Turn on the saber and start background glow in its own thread."""
     log.info("Lightsaber start")
     pygame.mixer.Sound.play(lightsaber_open_sound)
     pygame.mixer.music.load(lightsaber_hum_sound)
     pygame.mixer.music.play(-1)
-    
+
+    # Extend gradually
     for led in lightsaber_leds:
         for i in range(1, 101):
-            led.value = i/100
+            led.value = i / 100
             sleep(lightsaber_led_sleep_time)
-    
+
     global LIGHTSABER_MODE
     LIGHTSABER_MODE = True
-    lightsaber_glow()
+
+    # Run the glow loop on a daemon thread so callbacks return immediately
+    Thread(target=lightsaber_glow, daemon=True).start()
 
 
 def lightsaber_glow():
+    """Subtle breathing effect while the saber is on."""
     while LIGHTSABER_MODE:
         # Glow up
         for i in range(80, 100):
             for led in lightsaber_leds:
-                led.value = i/100
+                led.value = i / 100
             sleep(0.01)
-        
+
         # Glow down
-        for i in range(100, 80):
+        for i in range(100, 79, -1):  # correct descending range
             for led in lightsaber_leds:
-                led.value = i/100
+                led.value = i / 100
             sleep(0.01)
-        sleep(randint(1,20)/10)
+
+        sleep(randint(1, 20) / 10)
 
 
 def lightsaber_close():
     log.info("Lightsaber stop")
     global LIGHTSABER_MODE
-    LIGHTSABER_MODE = False
+    LIGHTSABER_MODE = False  # stops the glow thread next loop
     sleep(0.5)
     pygame.mixer.music.stop()
     pygame.mixer.Sound.play(lightsaber_close_sound)
 
+    # Retract gradually
     for led in reversed(lightsaber_leds):
         for i in range(100, 0, -1):
-            led.value = i/100
+            led.value = i / 100
             sleep(lightsaber_led_sleep_time)
         led.value = 0
 
@@ -189,4 +198,3 @@ def main():
 if __name__ == '__main__':
     main()
     sleep(5)
-
