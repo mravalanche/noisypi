@@ -4,6 +4,6 @@ textual
 gpiozero
 pygame
 lgpio
-RPi
+rpi.gpio
 pigpio
 gpiozero

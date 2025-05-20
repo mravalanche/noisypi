@@ -17,8 +17,8 @@ python -m venv .venv
 
 ### systemctl config
 
-Then make a service file in:  
-`/etc/systemd/system/noisebox.service`
+Then make a service file in:
+`~/.config/systemd/user`
 
 Add the following:
 
@@ -41,7 +41,7 @@ WantedBy=multi-user.target
 
 Then run:
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable noisebox.service
-sudo systemctl start noisebox.service
+systemctl --user daemon-reload
+systemctl --user enable --now noisebox.service
+sudo loginctl enable-linger $USER
 ```

@@ -10,6 +10,17 @@ from threading import Thread, Timer
 
 pygame.init()
 
+# make sure the mixer came up, retry a couple of times
+for attempt in range(3):
+    try:
+        pygame.mixer.init()
+        break
+    except pygame.error as e:
+        if attempt == 2:
+            raise
+        sleep(0.5)
+
+
 # ------------------------------------------------
 # Resources
 # ------------------------------------------------
@@ -246,6 +257,7 @@ disco_switch.when_deactivated = disco_stop
 def main():
     log.info("------- NoiseBox Starting -------")
     pygame.mixer.Sound.play(r2_beep_sound)
+    lightsaber_led2.blink()
     pause()
 
 
