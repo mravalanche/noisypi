@@ -39,7 +39,7 @@ lightsaber_led1 = PWMLED(25)
 lightsaber_led2 = PWMLED(24)
 lightsaber_led3 = PWMLED(23)
 
-blinky_switch = Button()
+blinky_switch = Button(19)
 blinky_led1 = LED(12)
 blinky_led2 = LED(16)
 
