@@ -172,7 +172,7 @@ def _blinky_stop():
     log.info("Blinky Stop!")
     BLINKY_MODE = False
     blinky_led1.off()
-    blinky_led2.on()
+    blinky_led2.off()
 
 
 def blinky_schedule_stop():
